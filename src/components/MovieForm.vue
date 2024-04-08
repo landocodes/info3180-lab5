@@ -1,111 +1,109 @@
 <template>
-    <div class = "container">
-      <!-- Display success or error message -->
-      <div v-if="successMessage" :class="[success ? 'alert alert-success' : 'alert alert-danger']" role="alert">
-        <ul v-html="successMessage"></ul>
-        <!-- {{ successMessage }} -->
+  <div>
+    <h1>Upload Form</h1>
+    <form @submit.prevent="saveMovie" id="movieForm" enctype="multipart/form-data">
+      <div v-if="result.errors">
+        <ul class="alert alert-danger">
+          <li v-for="error in result.errors" :key="error">{{ error }}</li>
+        </ul>
       </div>
-  
-      <form id="movieForm" @submit.prevent="saveMovie">
-        <div class="form-group mb-3">
-          <label for="title" class="form-label">Movie Title</label>
-          <input type="text" v-model="title" name="title" class="form-control" placeholder="Enter movie title" />
-        </div>
-        <div class="form-group mb-3">
-          <label for="description" class="form-label">Description</label>
-          <textarea v-model="description" name="description" class="form-control"></textarea>
-        </div>
-        <div class="form-group mb-3">
-          <label for="poster" class="form-label">Poster</label>
-          <input type="file" ref="poster" name="poster" class="form-control-file" />
-        </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
-      </form>
-    </div>
+      <div v-if="result.message">
+        <div class="alert alert-success">{{ result.message }}</div>
+      </div>
+      <div class="form-group">
+        <label for="title" class="form-label">Movie Title</label>
+        <input name="title" v-model="formData.title" type="text" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label for="description" class="form-label">Description</label>
+        <textarea name="description" v-model="formData.description" class="form-control" rows="10" required></textarea>
+      </div>
+      <div class="form-group">
+        <label for="poster" class="form-label">Upload Poster</label>
+        <input type="file" name="poster" class="form-control-file" @change="handleFileChange" required>
+      </div>
+      <input type="submit" class="btn btn-primary" value="Submit">
+    </form>
+  </div>
 </template>
-  
+
 <script setup>
-    import { ref, onMounted } from 'vue';
-    
-    onMounted(() => {
-        getCsrfToken();
-    });
-    
-    const title = ref('');
-    const description = ref('');
-    const poster = ref(null);
-    const csrf_token = ref('');
-    const successMessage = ref('');
-    const success = ref(false); // Boolean flag to determine success or failure
-  
-    const getCsrfToken = () => {
-        fetch('/api/v1/csrf-token')
-        .then(response => response.json())
-        .then(data => {
-            if (data.csrf_token) {
-                csrf_token.value = data.csrf_token;
-            }
-            
-        })
-        .catch(error => {
-            console.error(error);
-        });
-    };
-  
-    const saveMovie = () => {
-        let movieForm = document.getElementById('movieForm');
-        let form_data = new FormData(movieForm);
-        fetch("/api/v1/movies", {
-        method: 'POST',
-        body: form_data,
-        headers: {
-            'X-CSRFToken': csrf_token.value
-        }
-        })
-    .then(response => {
-      if (response.ok) 
-      {
-        success.value = true;
-        return response.json();
-      } 
-      else 
-      {
-        success.value = false;
-        return response.json(); // ensures the response is retrieved
-        // throw new Error('Failed to add movie');
-      }
-    })
-    .then(data => {
-  // Set successMessage based on success or error response
-//   console.log(data);
-        if (success.value) {
-            successMessage.value = "Movie added successfully.";
-            // Clear form data if successful
-            title.value = '';
-            description.value = '';
-            poster.value.value = ''; // Clear the poster field
-        } else {
-            // Handle error response
-            if (data.errors) {
-            // Concatenate error messages to the successMessage
-            console.log(data.errors);
-            successMessage.value = "";
-            for(let i=0; i<data.errors.length; i++) {
-                successMessage.value += `<li>${data.errors[i]}</li>` ;
-            }
-            } else {
-            // If no specific error messages, use a generic error message
-            successMessage.value = "Failed to add movie. Please try again.";
-            }
-        }
-})
+import { ref, onMounted } from 'vue';
 
-    .catch(error => {
-      console.error(error);
-      // Handle error
-    });
-  };
+const formData = ref({
+  title: '',
+  description: '',
+  poster: null
+});
+const result = ref({});
 
-  
-  </script>
-  
+const saveMovie = async () => {
+  try {
+    const movieForm = document.getElementById("movieForm");
+    const form_data = new FormData(movieForm);
+
+    const response = await fetch("/api/v1/movies", {
+      method: "POST",
+      body: form_data
+    });
+
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    const data = await response.json();
+    result.value = data;
+  } catch (error) {
+    console.error('Fetch error:', error);
+    result.value = { errors: ["An error occurred while processing your request."] };
+  }
+};
+
+const handleFileChange = (e) => {
+  formData.value.poster = e.target.files[0];
+};
+
+onMounted(async () => {
+  // Fetch CSRF token
+  try {
+    const response = await fetch('/api/v1/csrf-token');
+    const data = await response.json();
+    // Set CSRF token
+    document.querySelector('meta[name="csrf-token"]').setAttribute('content', data.csrf_token);
+  } catch (error) {
+    console.error('Fetch error:', error);
+  }
+});
+</script>
+
+<style>
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group > label {
+  font-weight: bold;
+}
+
+input[type="submit"] {
+  width: 100px;
+  border: none;
+  background-color: rgb(76, 120, 240);
+  border-radius: 5%;
+  color: #fff;
+  cursor: pointer;
+}
+
+input[type="submit"]:hover {
+  background-color: rgb(6, 24, 104);
+}
+
+.alert {
+  padding-left: 50px;
+}
+</style>
