@@ -1,3 +1,4 @@
+<!-- AddMovieFormView.vue -->
 <template>
   <div>
     <h1>Add Movie</h1>
@@ -6,5 +7,5 @@
 </template>
 
 <script setup>
-import MovieForm from "../components/MovieForm.vue";
+import MovieForm from '../components/MovieForm.vue';
 </script>

@@ -1,3 +1,4 @@
+from app import views
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
@@ -14,5 +15,3 @@ db = SQLAlchemy(app)
 
 # Instantiate Flask-Migrate library here
 migrate = Migrate(app, db)
-
-from app import views
