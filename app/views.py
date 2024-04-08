@@ -10,7 +10,7 @@ from app import app, db
 from flask import render_template, request, jsonify, send_file
 from werkzeug.utils import secure_filename
 from app.models import Movies
-from .form import MovieForm
+from .forms import MovieForm
 
 
 ###
