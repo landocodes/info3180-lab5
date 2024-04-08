@@ -1,7 +1,6 @@
 <!-- AddMovieFormView.vue -->
 <template>
   <div>
-    <h1>Add Movie</h1>
     <MovieForm />
   </div>
 </template>
